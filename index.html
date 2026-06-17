@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- ============================================================= -->
+<!-- PAGE TITLE (browser tab)                                       -->
+<!-- ============================================================= -->
+<title>Save the Date — Jeff &amp; Marie</title>
+
+<!-- ============================================================= -->
+<!-- WHATSAPP / LINK PREVIEW (Open Graph)                          -->
+<!-- These control the little preview card WhatsApp shows when you  -->
+<!-- paste the link. SWAP the text below. For a thumbnail image,    -->
+<!-- export a PNG of the front, put it in the repo as preview.png,  -->
+<!-- and set og:image to the FULL url e.g.                          -->
+<!-- https://djekovic.github.io/invite/preview.png                  -->
+<!-- ============================================================= -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Save the Date" />
+<meta property="og:description" content="Jeff &amp; Marie — 11.11.22. Tap to open the invitation." />
+<meta property="og:image" content="preview.png" />
+<meta property="og:url" content="https://YOUR-USERNAME.github.io/invite/" />
+<meta name="theme-color" content="#FBFAF7" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Mrs+Saint+Delafield&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --paper:#FBFAF7;       /* page background  */
+    --card:#FFFFFF;        /* card face        */
+    --ink:#1c1b18;         /* main text        */
+    --ink-soft:#3a382f;
+    --line:#e7e3da;        /* hairlines        */
+    --env:#f3efe6;         /* envelope paper   */
+    --env-shade:#e9e3d6;   /* envelope flap    */
+    --seal:#6b7355;        /* sage wax seal    */
+    --sage:#6b7355;
+    --sage-deep:#4a5240;
+    --bloom-violet:#7e6f95;
+    --bloom-peach:#c79b89;
+
+    --track-wide:0.42em;   /* letter-spacing for caps */
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(120% 90% at 50% 0%, #ffffff 0%, var(--paper) 55%, #efece4 100%);
+    color:var(--ink);
+    font-family:"Cormorant Garamond", Georgia, serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100svh;
+    padding:24px;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+
+  /* ---------- Stage ---------- */
+  .scene{
+    position:relative;
+    width:min(92vw, 460px);
+    aspect-ratio:3 / 4;
+    perspective:1600px;
+  }
+
+  /* ---------- Envelope ---------- */
+  .envelope{ position:absolute; inset:0; }
+
+  .env-base{
+    position:absolute; inset:0;
+    background:linear-gradient(160deg, var(--env) 0%, #ece6da 100%);
+    border-radius:6px;
+    box-shadow:0 30px 60px -28px rgba(60,50,30,.45), 0 2px 0 rgba(255,255,255,.6) inset;
+  }
+
+  /* The pocket: front lower panel that hides the card when closed */
+  .env-pocket{
+    position:absolute; left:0; right:0; bottom:0;
+    height:62%;
+    background:linear-gradient(160deg, #f1ebdf 0%, #e6dfd0 100%);
+    border-radius:0 0 6px 6px;
+    clip-path:polygon(0 28%, 50% 0, 100% 28%, 100% 100%, 0 100%);
+    box-shadow:0 -1px 0 rgba(0,0,0,.04) inset;
+    z-index:3;
+  }
+
+  /* The closing flap (3D) */
+  .env-flap{
+    position:absolute; left:0; right:0; top:0;
+    height:52%;
+    transform-origin:top center;
+    transform:rotateX(0deg);
+    z-index:4;
+    backface-visibility:hidden;
+  }
+  .env-flap::before{
+    content:"";
+    position:absolute; inset:0;
+    background:linear-gradient(160deg, var(--env-shade) 0%, #ddd5c4 100%);
+    clip-path:polygon(0 0, 100% 0, 50% 96%);
+    filter:drop-shadow(0 6px 8px rgba(80,66,40,.18));
+  }
+
+  /* Wax seal / open button */
+  .seal{
+    position:absolute; left:50%; top:46%;
+    transform:translate(-50%,-50%);
+    width:74px; height:74px; border-radius:50%;
+    border:0; cursor:pointer; z-index:6;
+    background:radial-gradient(circle at 38% 34%, #7c855f, var(--seal) 58%, #565d44 100%);
+    box-shadow:0 6px 14px -4px rgba(40,46,28,.6), 0 1px 0 rgba(255,255,255,.25) inset;
+    color:#f4f1e6;
+    display:grid; place-items:center;
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .seal:hover{ transform:translate(-50%,-50%) scale(1.05); }
+  .seal:focus-visible{ outline:3px solid var(--ink); outline-offset:4px; }
+  .seal svg{ width:34px; height:34px; opacity:.92; }
+
+  .hint{
+    position:absolute; left:0; right:0; bottom:-44px;
+    text-align:center;
+    font-size:.78rem; letter-spacing:.34em; text-transform:uppercase;
+    color:var(--ink-soft); opacity:.7;
+    animation:breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes breathe{ 0%,100%{opacity:.45} 50%{opacity:.85} }
+
+  /* gentle float on the whole sealed envelope */
+  .floaty{ animation:float 5.5s ease-in-out infinite; }
+  @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  /* ---------- Card ---------- */
+  .card{
+    position:absolute; left:6%; right:6%; top:7%; bottom:7%;
+    z-index:2;
+    transform:translateY(34%);
+    transform-style:preserve-3d;
+  }
+  .card-inner{
+    position:relative; width:100%; height:100%;
+    transition:transform .9s cubic-bezier(.2,.75,.2,1);
+    transform-style:preserve-3d;
+  }
+  .card.flipped .card-inner{ transform:rotateY(180deg); }
+
+  .face{
+    position:absolute; inset:0;
+    backface-visibility:hidden;
+    background:var(--card);
+    border-radius:3px;
+    box-shadow:0 24px 50px -26px rgba(50,42,24,.5);
+    padding:9% 8%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    overflow:hidden;
+  }
+  .face::after{ /* thin inner frame */
+    content:""; position:absolute; inset:14px;
+    border:1px solid var(--line); border-radius:2px; pointer-events:none;
+  }
+  .back{ transform:rotateY(180deg); }
+
+  .eyebrow{
+    font-size:clamp(.62rem,2.4vw,.8rem);
+    font-weight:500; letter-spacing:var(--track-wide);
+    text-transform:uppercase;
+  }
+  .date-top{
+    font-weight:500; letter-spacing:.5em;
+    font-size:clamp(.7rem,2.8vw,.95rem);
+    margin-bottom:1.4em;
+  }
+  .stamp{ /* SAVE THE DATE */
+    letter-spacing:var(--track-wide);
+    font-size:clamp(.72rem,3vw,1rem);
+    color:var(--ink);
+    margin-bottom:.2em;
+  }
+  .names{
+    font-family:"Mrs Saint Delafield", cursive;
+    font-size:clamp(3.4rem,15vw,5.6rem);
+    line-height:.9;
+    margin:.18em 0 .42em;
+    color:var(--ink);
+  }
+  .meta{
+    letter-spacing:.3em;
+    font-size:clamp(.6rem,2.5vw,.82rem);
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    max-width:90%;
+  }
+
+  /* botanical art */
+  .sprig{ margin-top:1.6em; color:var(--sage-deep); width:46%; max-width:150px; }
+  .sprig path{ vector-effect:non-scaling-stroke; }
+
+  /* back face details */
+  .detail-list{
+    margin:1.1em 0 1.4em;
+    display:grid; gap:.85em;
+  }
+  .detail-list div{
+    letter-spacing:.22em; text-transform:uppercase;
+    font-size:clamp(.62rem,2.5vw,.84rem); color:var(--ink-soft);
+  }
+  .detail-list b{ display:block; font-weight:500; letter-spacing:.12em; color:var(--ink); }
+
+  .rsvp{
+    display:inline-block;
+    text-decoration:none;
+    color:var(--ink);
+    border:1px solid var(--ink);
+    padding:.85em 2.2em;
+    letter-spacing:.34em; text-transform:uppercase;
+    font-size:clamp(.62rem,2.6vw,.82rem);
+    transition:background .3s ease, color .3s ease;
+    z-index:2;
+  }
+  .rsvp:hover, .rsvp:focus-visible{ background:var(--ink); color:#fff; outline:none; }
+
+  .wildflowers{
+    position:absolute; left:0; right:0; bottom:0;
+    width:100%; pointer-events:none;
+  }
+
+  /* ---------- Controls (appear after open) ---------- */
+  .controls{
+    position:absolute; left:0; right:0; bottom:-58px;
+    display:flex; justify-content:center; gap:18px;
+    opacity:0; pointer-events:none;
+    transition:opacity .5s ease 1.9s;
+  }
+  .flip-btn{
+    background:none; border:0; cursor:pointer;
+    color:var(--ink-soft);
+    letter-spacing:.26em; text-transform:uppercase;
+    font-size:.74rem; font-family:inherit;
+    padding:8px 4px;
+    border-bottom:1px solid transparent;
+    transition:border-color .25s ease, color .25s ease;
+  }
+  .flip-btn:hover, .flip-btn:focus-visible{ color:var(--ink); border-color:var(--ink); outline:none; }
+
+  /* ---------- OPEN sequence ---------- */
+  .scene.is-open .floaty{ animation:none; }
+  .scene.is-open .seal{ opacity:0; pointer-events:none; transition:opacity .3s ease; }
+  .scene.is-open .hint{ opacity:0; }
+
+  .scene.is-open .env-flap{ animation:flap-open .85s ease .15s forwards; }
+  @keyframes flap-open{
+    0%{ transform:rotateX(0); opacity:1; }
+    70%{ transform:rotateX(176deg); opacity:1; }
+    100%{ transform:rotateX(176deg); opacity:0; }
+  }
+
+  .scene.is-open .card{ animation:emerge 1.7s cubic-bezier(.2,.72,.2,1) .35s forwards; }
+  @keyframes emerge{
+    0%{ transform:translateY(34%); }
+    52%{ transform:translateY(-60%); }   /* rise clear of the pocket */
+    100%{ transform:translateY(0); }      /* settle centered          */
+  }
+
+  .scene.is-open .env-base,
+  .scene.is-open .env-pocket{ animation:fade-away .7s ease 1.45s forwards; }
+  @keyframes fade-away{ to{ opacity:0; transform:translateY(12px); } }
+
+  .scene.is-open .controls{ opacity:1; pointer-events:auto; }
+
+  /* ---------- Reduced motion: no animation, card shown ---------- */
+  @media (prefers-reduced-motion:reduce){
+    .floaty,.hint{ animation:none; }
+    .env-base,.env-pocket,.env-flap,.seal{ display:none; }
+    .card{ transform:translateY(0); }
+    .controls{ opacity:1; pointer-events:auto; transition:none; }
+    .card-inner{ transition:transform .4s ease; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene" id="scene">
+
+  <!-- ENVELOPE -->
+  <div class="envelope floaty">
+    <div class="env-base"></div>
+    <div class="env-pocket"></div>
+    <div class="env-flap"></div>
+
+    <!-- Wax seal = the OPEN button -->
+    <button class="seal" id="openBtn" aria-label="Open the invitation">
+      <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+        <path d="M20 30c0-6 0-12 4-16M20 30c0-5 0-9-3-13" />
+        <path d="M24 16c2-2 5-2 7-1-1 3-4 5-7 4z" fill="currentColor" stroke="none"/>
+        <path d="M17 19c-2-2-5-2-7-1 1 3 4 5 7 4z" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <div class="hint" id="hint">Tap to open</div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card" id="card">
+    <div class="card-inner">
+
+      <!-- FRONT  (template 1 — line sprig) -->
+      <!-- ===== SWAP YOUR DETAILS HERE ===== -->
+      <div class="face front">
+        <div class="date-top">11&nbsp;&nbsp;11&nbsp;&nbsp;22</div>
+        <div class="stamp">Save&nbsp;the&nbsp;Date</div>
+        <div class="names">Jeff &amp; Marie</div>
+        <div class="meta">Address goes here &nbsp;|&nbsp; and here the city</div>
+        <svg class="sprig" viewBox="0 0 200 64" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
+          <path d="M14 40 C60 18, 130 18, 188 30"/>
+          <path d="M52 30 C46 20, 50 14, 60 13 C58 22, 56 27, 52 30 Z" fill="currentColor" stroke="none" opacity=".85"/>
+          <path d="M78 26 C72 16, 76 10, 86 9 C84 18, 82 23, 78 26 Z" fill="currentColor" stroke="none" opacity=".85"/>
+          <path d="M104 25 C98 15, 102 9, 112 8 C110 17, 108 22, 104 25 Z" fill="currentColor" stroke="none" opacity=".85"/>
+          <path d="M70 33 C66 42, 60 46, 51 45 C56 38, 62 35, 70 33 Z" fill="currentColor" stroke="none" opacity=".7"/>
+          <path d="M96 33 C92 43, 86 47, 77 46 C82 39, 88 36, 96 33 Z" fill="currentColor" stroke="none" opacity=".7"/>
+          <path d="M124 31 C120 41, 114 45, 105 44 C110 37, 116 34, 124 31 Z" fill="currentColor" stroke="none" opacity=".7"/>
+        </svg>
+      </div>
+
+      <!-- BACK  (template 2 — wildflowers + RSVP) -->
+      <!-- ===== SWAP YOUR DETAILS HERE ===== -->
+      <div class="face back">
+        <div class="eyebrow">You're invited</div>
+        <div class="names" style="font-size:clamp(2.8rem,12vw,4.4rem);margin:.05em 0 .5em">Jeff &amp; Marie</div>
+        <div class="detail-list">
+          <div><b>Friday, 11 November 2022</b>Ceremony at 4:00 pm</div>
+          <div><b>The Venue Name</b>Address goes here, the city</div>
+        </div>
+
+        <!-- ===== PASTE YOUR GOOGLE FORM LINK in href below ===== -->
+        <a class="rsvp" href="https://forms.gle/YOUR_FORM_LINK" target="_blank" rel="noopener">RSVP</a>
+
+        <svg class="wildflowers" viewBox="0 0 400 90" fill="none" aria-hidden="true">
+          <g stroke="var(--sage-deep)" stroke-width="1.2" stroke-linecap="round" fill="none">
+            <path d="M40 90 C38 70 36 56 40 40"/>
+            <path d="M40 58 C32 54 28 56 26 50 M40 66 C48 62 52 64 54 58"/>
+            <path d="M120 90 C122 68 120 54 116 42"/>
+            <path d="M116 60 C108 58 104 60 102 54 M116 70 C124 68 128 70 130 64"/>
+            <path d="M210 90 C208 66 210 52 214 40"/>
+            <path d="M214 58 C206 56 202 58 200 52 M214 68 C222 66 226 68 228 62"/>
+            <path d="M300 90 C302 70 300 56 296 44"/>
+            <path d="M296 62 C288 60 284 62 282 56 M296 72 C304 70 308 72 310 66"/>
+            <path d="M364 90 C362 72 364 58 368 46"/>
+            <path d="M368 64 C360 62 356 64 354 58 M368 74 C376 72 380 74 382 68"/>
+          </g>
+          <g stroke="none">
+            <circle cx="40" cy="38" r="5" fill="var(--bloom-violet)" opacity=".85"/>
+            <circle cx="36" cy="34" r="3.4" fill="var(--bloom-violet)" opacity=".6"/>
+            <circle cx="116" cy="40" r="5.2" fill="var(--bloom-peach)" opacity=".85"/>
+            <circle cx="121" cy="36" r="3.2" fill="var(--bloom-peach)" opacity=".6"/>
+            <circle cx="214" cy="38" r="4.6" fill="var(--sage)" opacity=".8"/>
+            <circle cx="296" cy="42" r="5" fill="var(--bloom-peach)" opacity=".8"/>
+            <circle cx="300" cy="38" r="3" fill="var(--bloom-peach)" opacity=".55"/>
+            <circle cx="368" cy="44" r="4.4" fill="var(--bloom-violet)" opacity=".75"/>
+          </g>
+        </svg>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="flip-btn" id="flipBtn" aria-label="Turn the card over">Turn over &nbsp;&#8594;</button>
+  </div>
+
+</div>
+
+<script>
+  const scene  = document.getElementById('scene');
+  const openBtn= document.getElementById('openBtn');
+  const card   = document.getElementById('card');
+  const flipBtn= document.getElementById('flipBtn');
+
+  function open(){ scene.classList.add('is-open'); }
+
+  openBtn.addEventListener('click', open);
+
+  function toggleFlip(){
+    const flipped = card.classList.toggle('flipped');
+    flipBtn.innerHTML = flipped ? '&#8592; &nbsp;Turn back' : 'Turn over &nbsp;&#8594;';
+  }
+  flipBtn.addEventListener('click', toggleFlip);
+
+  // Tapping the card (not the RSVP link) also flips it, once opened.
+  card.addEventListener('click', (e)=>{
+    if(!scene.classList.contains('is-open')) return;
+    if(e.target.closest('a')) return;      // let the RSVP link work
+    toggleFlip();
+  });
+</script>
+</body>
+</html>
