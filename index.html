@@ -256,12 +256,21 @@
   .rsvp-rule{ height:1px; background:var(--line); margin:20px 0; }
 
   .rsvp-person{ border:1px solid var(--line); background:rgba(255,255,255,.3);
-    padding:14px 16px; margin-bottom:12px; transition:border-color .25s ease; }
-  .rsvp-person.on{ border-color:var(--sage); }
-  .rsvp-check{ display:flex; align-items:center; gap:12px; cursor:pointer;
-    font-family:"Modern Prestige",cursive; font-size:1.5rem; line-height:1.1; color:var(--ink); }
-  .rsvp-check input{ width:20px; height:20px; accent-color:var(--sage); cursor:pointer; flex:none; }
-  .rsvp-details{ margin-top:13px; padding-top:13px; border-top:1px solid var(--line);
+    padding:16px; margin-bottom:12px; transition:border-color .25s ease; }
+  .rsvp-person.missing{ border-color:#c2766a; }
+  .rsvp-name{ font-family:"Modern Prestige",cursive; font-size:1.65rem; line-height:1.05;
+    color:var(--ink); margin-bottom:12px; }
+  .rsvp-q{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; }
+  .rsvp-q-label{ font-family:"EB Garamond",serif; font-style:italic; font-size:1.05rem; color:var(--ink-soft); }
+  .rsvp-choice{ display:flex; gap:10px; }
+  .rsvp-pill{ font-family:"EB Garamond",serif; font-size:.8rem; letter-spacing:.12em;
+    text-transform:uppercase; cursor:pointer; border:1px solid var(--line); border-radius:999px;
+    background:var(--card); color:var(--ink-soft); padding:.5em 1.5em;
+    transition:background .2s ease, color .2s ease, border-color .2s ease; }
+  .rsvp-pill:hover{ border-color:var(--ink-soft); }
+  .rsvp-pill.yes.selected{ background:var(--sage); border-color:var(--sage); color:#fff; }
+  .rsvp-pill.no.selected{ background:#cf8a7e; border-color:#cf8a7e; color:#fff; }
+  .rsvp-details{ margin-top:14px; padding-top:14px; border-top:1px solid var(--line);
     display:grid; gap:12px; }
   .rsvp-field{ display:grid; gap:5px; font-family:"EB Garamond",serif; font-weight:500;
     letter-spacing:.16em; text-transform:uppercase; font-size:.66rem; color:var(--ink-soft); }
@@ -282,6 +291,8 @@
     transition:background .3s ease, color .3s ease; }
   .rsvp-send:hover:not(:disabled), .rsvp-send:focus-visible{ background:var(--ink); color:#fff; outline:none; }
   .rsvp-send:disabled{ opacity:.5; cursor:default; }
+  .rsvp-hint{ text-align:center; font-family:"EB Garamond",serif; font-style:italic;
+    font-size:.92rem; color:#9b4a3a; margin-top:10px; }
 
   .rsvp-msg{ text-align:center; font-family:"EB Garamond",serif; font-style:italic;
     color:var(--ink-soft); padding:36px 6px; font-size:1.08rem; line-height:1.5; }
@@ -361,7 +372,7 @@
       <p class="rsvp-eyebrow">You're invited to celebrate</p>
       <p class="rsvp-title">Yakub &amp; Beyza</p>
       <p class="rsvp-lead">Will you join us?</p>
-      <p class="rsvp-instruct">Please tick everyone in your party who will be attending.</p>
+      <p class="rsvp-instruct">Please let us know who will be joining us.</p>
       <div class="rsvp-rule"></div>
 
       <div id="rsvpPeople"></div>
@@ -375,7 +386,8 @@
         </label>
       </div>
 
-      <button class="rsvp-send" id="rsvpSubmit" type="button">Send our RSVP</button>
+      <button class="rsvp-send" id="rsvpSubmit" type="button" disabled>Send our RSVP</button>
+      <p class="rsvp-hint" id="rsvpHint">Please choose yes or no for everyone above.</p>
     </div>
 
     <div id="rsvpDone" class="rsvp-msg rsvp-hidden">
@@ -471,15 +483,20 @@
 
     function render(){
       members.forEach((m)=>{
-        const coming = String(m.attending).toLowerCase() === "yes";
+        const ans = String(m.attending).toLowerCase();   // "yes" | "no" | ""
         const el = document.createElement('div');
-        el.className = "rsvp-person" + (coming ? " on" : "");
+        el.className = "rsvp-person";
+        el.dataset.answer = (ans === "yes" || ans === "no") ? ans : "";
         el.innerHTML =
-          '<label class="rsvp-check">' +
-            '<input type="checkbox" class="attend" ' + (coming ? "checked" : "") + ' />' +
-            '<span>' + m.name + ' ' + (m.surname || "") + '</span>' +
-          '</label>' +
-          '<div class="rsvp-details" ' + (coming ? "" : "hidden") + '>' +
+          '<div class="rsvp-name">' + m.name + ' ' + (m.surname || "") + '</div>' +
+          '<div class="rsvp-q">' +
+            '<span class="rsvp-q-label">Will you be attending?</span>' +
+            '<div class="rsvp-choice">' +
+              '<button type="button" class="rsvp-pill yes' + (ans==="yes"?" selected":"") + '" data-val="yes">Yes</button>' +
+              '<button type="button" class="rsvp-pill no'  + (ans==="no" ?" selected":"") + '" data-val="no">No</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="rsvp-details"' + (ans==="yes" ? "" : " hidden") + '>' +
             '<label class="rsvp-field">Dietary preference' +
               '<select class="diet">' +
                 '<option value="">No preference</option>' +
@@ -494,33 +511,55 @@
         peopleEl.appendChild(el);
       });
 
-      peopleEl.addEventListener('change',(e)=>{
-        if(!e.target.classList.contains('attend')) return;
-        const p = e.target.closest('.rsvp-person');
-        p.classList.toggle('on', e.target.checked);
-        p.querySelector('.rsvp-details').hidden = !e.target.checked;
+      peopleEl.addEventListener('click',(e)=>{
+        const pill = e.target.closest('.rsvp-pill');
+        if(!pill) return;
+        const person = pill.closest('.rsvp-person');
+        const val = pill.dataset.val;
+        person.dataset.answer = val;
+        person.classList.remove('missing');
+        person.querySelectorAll('.rsvp-pill').forEach(p => p.classList.toggle('selected', p === pill));
+        person.querySelector('.rsvp-details').hidden = (val !== 'yes');
+        updateSubmitState();
       });
 
       if(members[0]){
         document.getElementById('rsvpAddNotes').value = members[0].additionalNotes || "";
         document.getElementById('rsvpMessage').value  = members[0].messageToCouple || "";
       }
+      updateSubmitState();
       hide(statusEl); show(formEl);
     }
 
+    function updateSubmitState(){
+      const persons = [...peopleEl.querySelectorAll('.rsvp-person')];
+      const allAnswered = persons.length > 0 && persons.every(p => p.dataset.answer);
+      document.getElementById('rsvpSubmit').disabled = !allAnswered;
+      document.getElementById('rsvpHint').style.display = allAnswered ? 'none' : 'block';
+    }
+
     document.getElementById('rsvpSubmit').addEventListener('click', async ()=>{
+      const rows = [...peopleEl.querySelectorAll('.rsvp-person')];
+
+      // every guest must have an explicit yes/no before we send
+      const unanswered = rows.filter(r => !r.dataset.answer);
+      if(unanswered.length){
+        unanswered.forEach(r => r.classList.add('missing'));
+        updateSubmitState();
+        return;
+      }
+
       const sBtn = document.getElementById('rsvpSubmit');
       sBtn.disabled = true; sBtn.textContent = "Sending…";
-      const rows = [...peopleEl.querySelectorAll('.rsvp-person')];
       let count = 0;
       const payloadMembers = rows.map((row,i)=>{
-        const attending = row.querySelector('.attend').checked;
+        const attending = row.dataset.answer === 'yes';
         if(attending) count++;
         return {
           row: members[i].row,
           attending,
-          dietaryPreference: row.querySelector('.diet').value,
-          dietaryNotes: row.querySelector('.dietnotes').value.trim(),
+          dietaryPreference: attending ? row.querySelector('.diet').value : "",
+          dietaryNotes: attending ? row.querySelector('.dietnotes').value.trim() : "",
           additionalNotes: i===0 ? document.getElementById('rsvpAddNotes').value.trim() : "",
           messageToCouple: i===0 ? document.getElementById('rsvpMessage').value.trim() : "",
         };
