@@ -442,17 +442,31 @@
       document.body.style.overflow = '';
     }
 
-    async function load(){
+    function load(){
       if(!code){ fail("This link is missing its code.<br><small>Please use the link from your invitation.</small>"); return; }
-      try{
-        const res = await fetch(ENDPOINT + "?code=" + encodeURIComponent(code));
-        const data = await res.json();
-        if(!data.ok){ fail("We couldn't find your invitation.<br><small>Please check the link, or let us know.</small>"); return; }
+      // Apps Script can't send CORS headers, so read via JSONP: a <script> tag
+      // whose URL ends in &callback=fn. The same-origin policy doesn't apply to
+      // script tags, so the response runs as JS and calls our function.
+      const cbName = 'rsvpCb_' + Date.now();
+      const s = document.createElement('script');
+      let done = false;
+      function cleanup(){
+        done = true; clearTimeout(timer);
+        if(s.parentNode) s.parentNode.removeChild(s);
+        try{ delete window[cbName]; }catch(_){ window[cbName] = undefined; }
+      }
+      const timer = setTimeout(function(){
+        if(!done){ cleanup(); fail("Something went wrong loading your invitation.<br><small>Please try again in a moment.</small>"); }
+      }, 12000);
+      window[cbName] = function(data){
+        cleanup();
+        if(!data || !data.ok){ fail("We couldn't find your invitation.<br><small>Please check the link, or let us know.</small>"); return; }
         members = data.members;
         render();
-      }catch(err){
-        fail("Something went wrong loading your invitation.<br><small>Please try again in a moment.</small>");
-      }
+      };
+      s.onerror = function(){ cleanup(); fail("Something went wrong loading your invitation.<br><small>Please try again in a moment.</small>"); };
+      s.src = ENDPOINT + "?code=" + encodeURIComponent(code) + "&callback=" + cbName;
+      document.body.appendChild(s);
     }
 
     function render(){
@@ -512,9 +526,9 @@
         };
       });
       try{
-        const res = await fetch(ENDPOINT, { method:"POST", body: JSON.stringify({ code, members: payloadMembers }) });
-        const data = await res.json();
-        if(!data.ok) throw new Error("save failed");
+        // no-cors: the browser sends the POST (doPost writes to the sheet) but
+        // returns an opaque response we can't read — so a completed send = success.
+        await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: JSON.stringify({ code, members: payloadMembers }) });
         hide(formEl); show(doneEl);
         document.getElementById('rsvpDoneLine').textContent = count
           ? ("We can't wait to see " + (count===1 ? "you." : "all " + count + " of you."))
