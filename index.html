@@ -569,9 +569,21 @@
         // returns an opaque response we can't read — so a completed send = success.
         await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: JSON.stringify({ code, members: payloadMembers }) });
         hide(formEl); show(doneEl);
-        document.getElementById('rsvpDoneLine').textContent = count
-          ? ("We can't wait to see " + (count===1 ? "you." : "all " + count + " of you."))
-          : "We're sorry you can't be there — thank you for letting us know.";
+        const total = payloadMembers.length;
+        const dl = document.getElementById('rsvpDoneLine');
+        const coming =
+          count === 1 ? "you" :
+          count === 2 ? "the both of you" :
+          "all " + count + " of you";
+        if(count === 0){
+          dl.textContent = total === 1
+            ? "We're sorry you can't be there — thank you for letting us know."
+            : "We're sorry none of you can make it — thank you for letting us know.";
+        } else if(count === total){
+          dl.textContent = "We can't wait to see " + coming + ".";
+        } else {
+          dl.textContent = "We can't wait to see " + coming + " — and we'll miss the rest of your party.";
+        }
       }catch(err){
         sBtn.disabled = false; sBtn.textContent = "Send our RSVP";
         alert("Something went wrong sending your RSVP. Please try again.");
