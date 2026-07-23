@@ -165,11 +165,9 @@
      (its own woven borders frame the card), text sits on a cartouche. */
   .face{
     position:absolute; inset:0; backface-visibility:hidden;
-    /* tiled small carpets (patchwork look, like the reference).
-       Both percentages set so a WHOLE number of carpets fits each way —
-       4 across × 4 down — so no row is ever cut off. For a 3×3 grid of
-       bigger carpets use 33.35% 33.35%. */
-    background:url("hali-reference.jpg") top left / 25.02% 25.02% repeat, var(--field-deep);
+    /* one full carpet fills each face — its own woven borders frame the
+       card. (For the tiled patchwork look: 25.02% 25.02% repeat.) */
+    background:url("hali-reference.jpg") center / 100% 100% no-repeat, var(--field-deep);
     border-radius:4px;
     box-shadow:0 26px 54px -28px rgba(0,0,0,.8);
     padding:9% 8%;
