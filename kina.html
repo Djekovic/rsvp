@@ -204,6 +204,11 @@
     font-size:clamp(.58rem,2.2vw,.76rem); line-height:1.95; margin-top:1em;
     max-width:100%;
   }
+  .eyebrow-line{
+    letter-spacing:.26em; text-transform:uppercase;
+    font-size:clamp(.54rem,2vw,.7rem); line-height:1.9; margin-bottom:.5em;
+  }
+  .eyebrow-line:empty{ display:none; }
   .pipe-date{
     letter-spacing:.14em; font-weight:500;
     font-size:clamp(1rem,4vw,1.3rem); margin-top:1.1em; text-transform:uppercase;
@@ -347,6 +352,8 @@
       <!-- Single face — everything on the front, RSVP included -->
       <div class="face front">
         <div class="arch arch-burg">
+          <!-- empty in Turkish (hidden); "You are invited to" in English -->
+          <div class="eyebrow-line" data-i18n="eyebrowLine"></div>
           <div class="script-name" data-i18n="frontName">Beyza'nın</div>
           <div class="caps-line" data-i18n="frontCaps">Kına Gecesine Davetlisiniz</div>
           <div class="pipe-date"><span class="js-day">06</span><span class="pipe">|</span><span data-i18n="monthName">Kasım</span><span class="pipe">|</span><span class="js-year">26</span></div>
@@ -404,6 +411,7 @@
   const I18N = {
     tr: {
       hint: "Açmak için dokunun",
+      eyebrowLine: "",
       frontName: "Beyza'nın",
       frontCaps: "Kına Gecesine Davetlisiniz",
       monthName: "Kasım",
@@ -438,8 +446,9 @@
     },
     en: {
       hint: "Tap to open",
+      eyebrowLine: "You are invited to",
       frontName: "Beyza's",
-      frontCaps: "You Are Invited to the Henna Night",
+      frontCaps: "Henna Night",
       monthName: "Nov",
       frontMeta: "Venue to be announced",
       whenTime: "7:00 PM",
@@ -530,6 +539,7 @@
 
   // Details-tab keys -> which I18N string they override
   const DETAIL_MAP = {
+    kina_eyebrow_tr:['tr','eyebrowLine'], kina_eyebrow_en:['en','eyebrowLine'],
     kina_name_tr:  ['tr','frontName'],  kina_name_en:  ['en','frontName'],
     kina_caps_tr:  ['tr','frontCaps'],  kina_caps_en:  ['en','frontCaps'],
     kina_time_tr:  ['tr','whenTime'],   kina_time_en:  ['en','whenTime'],
