@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- ============================================================= -->
+<!-- KINA GECESİ INVITE — prototype                                 -->
+<!-- Same mechanics as index.html (envelope, flip, RSVP overlay);   -->
+<!-- styled after the halı reference (madder red / navy medallions  -->
+<!-- / cream & gold / olive border). TR/EN one-click switch.        -->
+<!-- Open with ?code=demo for a local demo of the RSVP flow.        -->
+<!-- ============================================================= -->
+<title>Kına Gecesi — Beyza</title>
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Kına Gecesi" />
+<meta property="og:description" content="Beyza'nın kına gecesine davetlisiniz." />
+<meta name="theme-color" content="#2A0F0D" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Great+Vibes&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg:#2A0F0D;            /* dim room the carpet hangs in */
+    --field:#8E1F1A;          /* madder red carpet field */
+    --field-deep:#701511;
+    --navy:#221E2E;           /* medallion navy-black */
+    --cream:#EAD9AE;
+    --cream-soft:#d9c493;
+    --gold:#C79A4B;
+    --olive:#6C7040;
+    --terracotta:#C4674A;
+    --env:#451310;            /* envelope oxblood */
+    --env-deep:#320D0B;
+    --env-flap:#521714;
+    --panel:#F3E7CE;          /* RSVP paper */
+    --panel-ink:#2B1512;
+    --panel-soft:#6b4a3d;
+    --panel-line:#d8c49a;
+    --track:0.32em;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background-color:var(--bg);
+    background-image:radial-gradient(120% 95% at 50% 0%, #47231c 0%, var(--bg) 60%, #1c0806 100%);
+    background-repeat:no-repeat;
+    color:var(--cream);
+    font-family:"EB Garamond", Georgia, serif;
+    display:flex; align-items:center; justify-content:center;
+    min-height:100svh; padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------------- Language switch (big & obvious) ---------------- */
+  .lang-switch{
+    position:fixed; top:14px; right:14px; z-index:2000;
+    display:flex; border:2px solid var(--gold); border-radius:999px;
+    overflow:hidden; background:rgba(34,30,46,.9);
+    box-shadow:0 6px 18px -6px rgba(0,0,0,.6);
+  }
+  .lang-switch button{
+    border:0; background:none; cursor:pointer;
+    font-family:"EB Garamond",serif; font-weight:500;
+    font-size:.95rem; letter-spacing:.08em;
+    color:var(--cream-soft); padding:.6em 1.2em; min-height:44px;
+    transition:background .25s ease, color .25s ease;
+  }
+  .lang-switch button.active{ background:var(--gold); color:#2B1512; font-weight:600; }
+  .lang-switch button:not(.active):hover{ color:var(--cream); }
+
+  /* no ?code= in the URL -> blank page */
+  body.blank .scene, body.blank .lang-switch{ display:none; }
+
+  .scene{
+    position:relative;
+    width:min(92vw, 430px);
+    aspect-ratio:3 / 4;
+    perspective:1400px;
+    cursor:pointer;
+  }
+  .scene.is-open{ cursor:default; }
+
+  /* ---------------- Envelope (closed look) ---------------- */
+  .env-back{
+    position:absolute; inset:0;
+    background:linear-gradient(160deg, var(--env) 0%, var(--env-deep) 100%);
+    border-radius:7px;
+    box-shadow:0 34px 64px -28px rgba(0,0,0,.75);
+    transition:opacity .6s ease .55s;
+  }
+  .env-pocket{
+    position:absolute; left:0; right:0; bottom:0; height:64%;
+    background:linear-gradient(160deg, var(--env-flap) 0%, var(--env-deep) 100%);
+    clip-path:polygon(0 30%, 50% 0, 100% 30%, 100% 100%, 0 100%);
+    border-radius:0 0 7px 7px;
+    z-index:4;
+    transition:opacity .6s ease .5s, transform .7s ease .5s;
+  }
+  .env-flap{
+    position:absolute; left:0; right:0; top:0; height:54%;
+    transform-origin:top center;
+    transform:rotateX(0deg);
+    z-index:6;
+    transition:transform .85s cubic-bezier(.3,.7,.2,1), opacity .4s ease .65s;
+  }
+  .env-flap::before{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(160deg, #5e1b17 0%, var(--env-deep) 100%);
+    clip-path:polygon(0 0, 100% 0, 50% 97%);
+    filter:drop-shadow(0 7px 7px rgba(0,0,0,.3));
+  }
+
+  .seal{
+    position:absolute; left:50%; top:45%;
+    transform:translate(-50%,-50%);
+    width:78px; height:78px; border-radius:50%; border:0;
+    z-index:8; cursor:pointer; padding:0;
+    background:radial-gradient(circle at 38% 34%, #e3bc72, var(--gold) 58%, #96702c 100%);
+    box-shadow:0 9px 18px -5px rgba(0,0,0,.65), 0 1px 0 rgba(255,244,214,.5) inset;
+    color:#3a2410; display:grid; place-items:center;
+    animation:pulse 2.4s ease-in-out infinite;
+    transition:opacity .3s ease;
+  }
+  .seal svg{ width:38px; height:38px; opacity:.95; }
+  @keyframes pulse{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.06);} }
+  .scene:hover .seal{ animation-play-state:paused; transform:translate(-50%,-50%) scale(1.07); }
+
+  .hint{
+    position:absolute; left:0; right:0; bottom:-40px; text-align:center;
+    font-size:.76rem; letter-spacing:.34em; text-transform:uppercase;
+    color:var(--cream-soft); opacity:.7;
+    transition:opacity .3s ease;
+  }
+
+  /* on open: envelope opens & recedes */
+  .scene.is-open .env-flap{ transform:rotateX(166deg); opacity:0; }
+  .scene.is-open .env-pocket{ opacity:0; transform:translateY(10%); }
+  .scene.is-open .env-back{ opacity:.12; }
+  .scene.is-open .seal{ opacity:0; pointer-events:none; }
+  .scene.is-open .hint{ opacity:0; }
+
+  /* ---------------- Card ---------------- */
+  .card{
+    position:absolute; top:4%; bottom:4%; left:7%; right:7%;
+    z-index:10; perspective:1200px;
+    opacity:0; transform:translateY(7%) scale(.96);
+    pointer-events:none;
+    transition:opacity .7s ease .5s, transform .85s cubic-bezier(.2,.7,.2,1) .5s;
+  }
+  .scene.is-open .card{ opacity:1; transform:none; pointer-events:auto; }
+
+  .card-inner{
+    position:relative; width:100%; height:100%;
+    transform-style:preserve-3d;
+    transition:transform .9s cubic-bezier(.2,.75,.2,1);
+  }
+  .card.flipped .card-inner{ transform:rotateY(180deg); }
+
+  /* The card IS the carpet: the halı photo fills each face edge to edge
+     (its own woven borders frame the card), text sits on a cartouche. */
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    /* tiled small carpets (patchwork look, like the reference).
+       Both percentages set so a WHOLE number of carpets fits each way —
+       4 across × 4 down — so no row is ever cut off. For a 3×3 grid of
+       bigger carpets use 33.35% 33.35%. */
+    background:url("hali-reference.jpg") top left / 25.02% 25.02% repeat, var(--field-deep);
+    border-radius:4px;
+    box-shadow:0 26px 54px -28px rgba(0,0,0,.8);
+    padding:9% 8%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; overflow:hidden;
+  }
+  .back{ transform:rotateY(180deg); justify-content:center; }
+  /* gentle tone-down so the arch panels pop against the busy weave */
+  .face::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:rgba(30,8,6,.2);
+  }
+
+  /* Dome/arch panel — cream on the front, burgundy on the back */
+  .arch{
+    position:relative; width:min(82%, 300px);
+    border-radius:999px 999px 3px 3px;
+    padding:3em 1.5em 2em;
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    box-shadow:0 14px 36px rgba(0,0,0,.45);
+  }
+  .arch-cream{ background:#F5EBD7; color:#5C1F1B; }
+  .arch-burg{
+    background:linear-gradient(170deg, #7A1B16 0%, #5C1310 100%);
+    color:#F5EBD7; border:1px solid rgba(245,235,215,.4);
+  }
+
+  .script-name{
+    font-family:"Great Vibes",cursive; font-weight:400;
+    font-size:clamp(2.2rem,10vw,3.2rem); line-height:1.15; color:inherit;
+  }
+  .caps-line{
+    letter-spacing:.26em; text-transform:uppercase;
+    font-size:clamp(.58rem,2.2vw,.76rem); line-height:1.95; margin-top:1em;
+    max-width:100%;
+  }
+  .pipe-date{
+    letter-spacing:.14em; font-weight:500;
+    font-size:clamp(1rem,4vw,1.3rem); margin-top:1.1em; text-transform:uppercase;
+  }
+  .pipe-date .pipe{ opacity:.45; padding:0 .3em; font-weight:400; }
+  .time-line{ letter-spacing:.26em; text-transform:uppercase; font-size:clamp(.6rem,2.3vw,.78rem); margin-top:.45em; }
+  .venue-lines{ letter-spacing:.22em; text-transform:uppercase; font-size:clamp(.56rem,2.1vw,.72rem); line-height:1.95; margin-top:1.2em; }
+
+  .follow{ font-style:italic; font-size:clamp(.66rem,2.4vw,.8rem); letter-spacing:.02em; opacity:.85; margin-top:1.2em; line-height:1.5; }
+  .rsvp{
+    display:inline-block; text-decoration:none; color:#5C1F1B;
+    background:none; cursor:pointer; border-radius:0;
+    border:1px solid #5C1F1B; padding:.8em 2.2em; margin-top:1.3em;
+    font-family:"EB Garamond",serif; letter-spacing:.26em; text-transform:uppercase; font-size:clamp(.64rem,2.4vw,.84rem);
+    transition:background .3s ease, color .3s ease;
+  }
+  .rsvp:hover, .rsvp:focus-visible{ background:#5C1F1B; color:#F5EBD7; outline:none; }
+
+  /* ---------------- Controls ---------------- */
+  .controls{
+    position:absolute; left:0; right:0; bottom:-52px;
+    display:flex; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity .5s ease 1.1s;
+  }
+  .scene.is-open .controls{ opacity:1; pointer-events:auto; }
+  .flip-btn{
+    background:none; border:0; cursor:pointer; color:var(--cream-soft);
+    letter-spacing:.26em; text-transform:uppercase; font-size:.74rem;
+    font-family:inherit; padding:8px 4px; border-bottom:1px solid transparent;
+    transition:border-color .25s ease, color .25s ease;
+  }
+  .flip-btn:hover, .flip-btn:focus-visible{ color:var(--cream); border-color:var(--gold); outline:none; }
+
+  .scene:focus-visible{ outline:3px solid var(--gold); outline-offset:6px; border-radius:8px; }
+
+  /* ---------------- Reduced motion ---------------- */
+  @media (prefers-reduced-motion:reduce){
+    .seal{ animation:none; display:none; }
+    .env-back,.env-pocket,.env-flap,.hint{ display:none; }
+    .card{ opacity:1; transform:none; pointer-events:auto; transition:none; }
+    .controls{ opacity:1; pointer-events:auto; }
+    .card-inner{ transition:transform .4s ease; }
+  }
+
+  /* ---------------- RSVP overlay ---------------- */
+  .rsvp-overlay{
+    position:fixed; inset:0; z-index:1000;
+    display:flex; align-items:center; justify-content:center; padding:24px 18px;
+    background:rgba(20,7,5,.65);
+    opacity:0; pointer-events:none; transition:opacity .35s ease;
+  }
+  .rsvp-overlay.open{ opacity:1; pointer-events:auto; }
+  .rsvp-panel{
+    position:relative; width:100%; max-width:440px; max-height:88vh; overflow-y:auto;
+    background:var(--panel); color:var(--panel-ink);
+    border:1px solid var(--panel-line); border-top:6px solid var(--field); border-radius:3px;
+    box-shadow:0 30px 60px -28px rgba(0,0,0,.85);
+    padding:36px 26px 30px;
+    transform:translateY(16px) scale(.985); transition:transform .35s ease;
+    -webkit-overflow-scrolling:touch;
+  }
+  .rsvp-overlay.open .rsvp-panel{ transform:none; }
+  .rsvp-close{
+    position:absolute; top:10px; right:12px; width:34px; height:34px;
+    border:0; background:none; cursor:pointer; color:var(--panel-soft);
+    font-size:1.5rem; line-height:1; border-radius:50%;
+    transition:color .25s ease;
+  }
+  .rsvp-close:hover, .rsvp-close:focus-visible{ color:var(--panel-ink); outline:none; }
+
+  .rsvp-eyebrow{ text-align:center; font-weight:500;
+    letter-spacing:var(--track); text-transform:uppercase; font-size:.7rem; color:var(--field); }
+  .rsvp-title{ text-align:center; font-family:"Playfair Display",serif; font-weight:500; font-style:italic;
+    font-size:clamp(1.7rem,7.5vw,2.2rem); line-height:1.05; margin:.12em 0 .08em; color:var(--panel-ink); }
+  .rsvp-lead{ text-align:center; font-style:italic; color:var(--panel-soft); font-size:1.02rem; }
+  .rsvp-instruct{ text-align:center; color:var(--panel-soft); font-size:.9rem; margin-top:.6em; line-height:1.45; }
+  .rsvp-rule{ height:1px; background:var(--panel-line); margin:20px 0; }
+
+  .rsvp-person{ border:1px solid var(--panel-line); background:rgba(255,255,255,.35);
+    padding:16px; margin-bottom:12px; transition:border-color .25s ease; }
+  .rsvp-person.missing{ border-color:var(--terracotta); }
+  .rsvp-name{ font-family:"Playfair Display",serif; font-style:italic; font-size:1.35rem; line-height:1.1;
+    color:var(--panel-ink); margin-bottom:12px; }
+  .rsvp-q{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; }
+  .rsvp-q-label{ font-style:italic; font-size:1.05rem; color:var(--panel-soft); }
+  .rsvp-choice{ display:flex; gap:10px; }
+  .rsvp-pill{ font-family:"EB Garamond",serif; font-size:.8rem; letter-spacing:.12em;
+    text-transform:uppercase; cursor:pointer; border:1px solid var(--panel-line); border-radius:999px;
+    background:var(--panel); color:var(--panel-soft); padding:.5em 1.5em;
+    transition:background .2s ease, color .2s ease, border-color .2s ease; }
+  .rsvp-pill:hover{ border-color:var(--panel-soft); }
+  .rsvp-pill.yes.selected{ background:var(--olive); border-color:var(--olive); color:#fff; }
+  .rsvp-pill.no.selected{ background:var(--terracotta); border-color:var(--terracotta); color:#fff; }
+  .rsvp-details{ margin-top:14px; padding-top:14px; border-top:1px solid var(--panel-line);
+    display:grid; gap:12px; }
+  .rsvp-field{ display:grid; gap:5px; font-weight:500;
+    letter-spacing:.16em; text-transform:uppercase; font-size:.66rem; color:var(--panel-soft); }
+  .rsvp-panel select, .rsvp-panel input[type=text], .rsvp-panel textarea{
+    font-family:"EB Garamond",serif; font-size:1rem; color:var(--panel-ink);
+    background:var(--panel); border:1px solid var(--panel-line); border-radius:0;
+    padding:10px 12px; width:100%; }
+  .rsvp-panel select:focus, .rsvp-panel input:focus, .rsvp-panel textarea:focus{
+    outline:2px solid var(--gold); outline-offset:1px; }
+  .rsvp-panel textarea{ min-height:70px; resize:vertical; }
+  .rsvp-extra{ display:grid; gap:14px; margin-top:6px; }
+
+  .rsvp-send{
+    display:block; width:100%; margin-top:22px; cursor:pointer;
+    font-family:"EB Garamond",serif; font-size:.8rem; letter-spacing:var(--track);
+    text-transform:uppercase; color:var(--panel-ink); background:none;
+    border:1px solid var(--panel-ink); border-radius:0; padding:1em 1.2em;
+    transition:background .3s ease, color .3s ease; }
+  .rsvp-send:hover:not(:disabled), .rsvp-send:focus-visible{ background:var(--field); border-color:var(--field); color:#fff; outline:none; }
+  .rsvp-send:disabled{ opacity:.5; cursor:default; }
+  .rsvp-hint{ text-align:center; font-style:italic;
+    font-size:.92rem; color:#9b3a2a; margin-top:10px; }
+
+  .rsvp-msg{ text-align:center; font-style:italic;
+    color:var(--panel-soft); padding:36px 6px; font-size:1.08rem; line-height:1.5; }
+  .rsvp-msg .big{ display:block; font-family:"Playfair Display",serif; font-style:italic;
+    font-size:1.9rem; color:var(--panel-ink); margin-bottom:.15em; }
+  .rsvp-msg small{ display:block; font-style:normal; font-size:.95rem; margin-top:10px; }
+  .rsvp-err{ color:#7d2a1c; }
+  .rsvp-hidden{ display:none !important; }
+
+  @media (prefers-reduced-motion:reduce){
+    .rsvp-overlay, .rsvp-panel{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Language switch — always visible, one-click, no reload -->
+<div class="lang-switch" role="group" aria-label="Dil / Language">
+  <button id="langTr" type="button" class="active">Türkçe</button>
+  <button id="langEn" type="button">English</button>
+</div>
+
+<div class="scene" id="scene" role="button" tabindex="0" aria-label="Davetiyeyi aç">
+
+  <!-- Envelope -->
+  <div class="env-back"></div>
+  <div class="env-pocket"></div>
+  <div class="env-flap"></div>
+  <button class="seal" id="sealBtn" aria-label="Davetiyeyi aç" tabindex="-1">
+    <!-- tulip (lale) motif -->
+    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M20 34V20"/>
+      <path d="M20 20C14 18 12 12 13 7c3 1 5 3 7 7 2-4 4-6 7-7 1 5-1 11-7 13z" fill="currentColor" stroke="none"/>
+      <path d="M20 34c-3 0-6-1-8-3M20 34c3 0 6-1 8-3"/>
+    </svg>
+  </button>
+  <div class="hint" data-i18n="hint">Açmak için dokunun</div>
+
+  <!-- Card -->
+  <div class="card" id="card">
+    <div class="card-inner">
+
+      <!-- FRONT — cream arch, like the left card in the reference -->
+      <div class="face front">
+        <div class="arch arch-cream">
+          <div class="script-name" data-i18n="frontName">Beyza'nın</div>
+          <div class="caps-line" data-i18n="frontCaps">Kına Gecesine Davetlisiniz</div>
+          <div class="pipe-date"><span class="js-day">06</span><span class="pipe">|</span><span data-i18n="monthName">Kasım</span><span class="pipe">|</span><span class="js-year">26</span></div>
+          <div class="time-line" data-i18n="whenTime">Saat 19:00</div>
+          <div class="venue-lines" data-i18n="frontMeta">Yer bilgisi yakında</div>
+        </div>
+      </div>
+
+      <!-- BACK — burgundy arch, like the right card in the reference -->
+      <div class="face back">
+        <div class="arch arch-cream">
+          <div class="script-name" data-i18n="backScript">Kınamız Var</div>
+          <div class="caps-line" data-i18n="funLine">Hanımlar, bugün beyleri evde bırakıyoruz — Beyza'nın kına gecesine gidiyoruz!</div>
+          <div class="pipe-date"><span class="js-day">06</span><span class="pipe">|</span><span data-i18n="monthName">Kasım</span><span class="pipe">|</span><span class="js-year">26</span></div>
+          <div class="time-line" data-i18n="whenTime">Saat 19:00</div>
+          <button class="rsvp" id="rsvpBtn" type="button">LCV / RSVP</button>
+          <div class="follow" data-i18n="follow">Kınamız erkek ve çocuksuzdur — anlayışınız için teşekkür ederiz.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="flip-btn" id="flipBtn" tabindex="-1" data-i18n="flipOver">Çevir &nbsp;&#8594;</button>
+  </div>
+
+</div>
+
+<!-- ============================================================= -->
+<!-- RSVP OVERLAY                                                   -->
+<!-- ============================================================= -->
+<div class="rsvp-overlay" id="rsvpOverlay" role="dialog" aria-modal="true" aria-label="LCV">
+  <div class="rsvp-panel">
+    <button class="rsvp-close" id="rsvpClose" type="button" aria-label="Kapat">&times;</button>
+
+    <p id="rsvpStatus" class="rsvp-msg" data-i18n="opening">Davetiyeniz açılıyor…</p>
+
+    <div id="rsvpForm" class="rsvp-hidden">
+      <p class="rsvp-eyebrow" data-i18n="eyebrow">Kına gecesi</p>
+      <p class="rsvp-title">Beyza</p>
+      <p class="rsvp-lead" data-i18n="lead">Aramızda olacak mısınız?</p>
+      <p class="rsvp-instruct" data-i18n="instruct">Lütfen kimlerin katılacağını bize bildirin.</p>
+      <div class="rsvp-rule"></div>
+
+      <div id="rsvpPeople"></div>
+
+      <div class="rsvp-extra">
+        <label class="rsvp-field"><span data-i18n="extraLabel">Bilmemiz gereken bir şey var mı? (isteğe bağlı)</span>
+          <input type="text" id="rsvpAddNotes" data-i18n-ph="extraPh" placeholder="Ulaşım, erişim ihtiyaçları vb." />
+        </label>
+        <label class="rsvp-field"><span data-i18n="msgLabel">Geline bir mesaj (isteğe bağlı)</span>
+          <textarea id="rsvpMessage" data-i18n-ph="msgPh" placeholder="Beyza'ya bir not bırakın"></textarea>
+        </label>
+      </div>
+
+      <button class="rsvp-send" id="rsvpSubmit" type="button" disabled data-i18n="send">LCV'mizi gönder</button>
+      <p class="rsvp-hint" id="rsvpHint" data-i18n="hintAll">Lütfen yukarıda herkes için evet ya da hayır seçin.</p>
+    </div>
+
+    <div id="rsvpDone" class="rsvp-msg rsvp-hidden">
+      <span class="big" data-i18n="thanks">Teşekkürler</span>
+      <span id="rsvpDoneLine"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ======================= i18n =======================
+  const I18N = {
+    tr: {
+      hint: "Açmak için dokunun",
+      frontName: "Beyza'nın",
+      frontCaps: "Kına Gecesine Davetlisiniz",
+      backScript: "Kınamız Var",
+      funLine: "Hanımlar, bugün beyleri evde bırakıyoruz — Beyza'nın kına gecesine gidiyoruz!",
+      monthName: "Kasım",
+      frontMeta: "Yer bilgisi yakında",
+      whenTime: "Saat 19:00",
+      follow: "Kınamız erkek ve çocuksuzdur — anlayışınız için teşekkür ederiz.",
+      flipOver: "Çevir  →",
+      flipBack: "←  Geri çevir",
+      opening: "Davetiyeniz açılıyor…",
+      missingCode: "Bu bağlantıda kod eksik.<br><small>Lütfen davetiyenizdeki bağlantıyı kullanın.</small>",
+      notFound: "Davetiyenizi bulamadık.<br><small>Lütfen bağlantıyı kontrol edin ya da bize haber verin.</small>",
+      loadFail: "Davetiyeniz yüklenirken bir sorun oluştu.<br><small>Lütfen birazdan tekrar deneyin.</small>",
+      eyebrow: "Kına gecesi",
+      lead: "Aramızda olacak mısınız?",
+      instruct: "Lütfen kimlerin katılacağını bize bildirin.",
+      attendQ: "Katılacak mısınız?",
+      yes: "Evet", no: "Hayır",
+      dietLabel: "Yemek tercihi",
+      dietNone: "Fark etmez", dietVeg: "Vejetaryen", dietPesc: "Pesketaryen",
+      allergyLabel: "Alerji veya yemek notu (isteğe bağlı)",
+      extraLabel: "Bilmemiz gereken bir şey var mı? (isteğe bağlı)",
+      extraPh: "Ulaşım, erişim ihtiyaçları vb.",
+      msgLabel: "Geline bir mesaj (isteğe bağlı)",
+      msgPh: "Beyza'ya bir not bırakın",
+      send: "LCV'mizi gönder",
+      sending: "Gönderiliyor…",
+      hintAll: "Lütfen yukarıda herkes için evet ya da hayır seçin.",
+      thanks: "Teşekkürler",
+      sendFail: "LCV'niz gönderilirken bir sorun oluştu. Lütfen tekrar deneyin.",
+      doneNone1: "Aramızda olamayacağınız için üzgünüz — haber verdiğiniz için teşekkürler.",
+      doneNoneMany: "Katılamayacağınız için üzgünüz — haber verdiğiniz için teşekkürler.",
+      doneAll: (c)=> c===1 ? "Sizi aramızda görmek için sabırsızlanıyoruz."
+                          : "Hepinizi aramızda görmek için sabırsızlanıyoruz.",
+      donePartial: "Gelecek olanları görmek için sabırsızlanıyoruz — gelemeyenleri özleyeceğiz.",
+    },
+    en: {
+      hint: "Tap to open",
+      frontName: "Beyza's",
+      frontCaps: "You Are Invited to the Henna Night",
+      backScript: "Henna Night",
+      funLine: "Ladies, tonight we're leaving the men at home — we're off to Beyza's henna night!",
+      monthName: "Nov",
+      frontMeta: "Venue to be announced",
+      whenTime: "7:00 PM",
+      follow: "Our henna night is ladies only — no men or children. Thank you for understanding!",
+      flipOver: "Turn over  →",
+      flipBack: "←  Turn back",
+      opening: "Opening your invitation…",
+      missingCode: "This link is missing its code.<br><small>Please use the link from your invitation.</small>",
+      notFound: "We couldn't find your invitation.<br><small>Please check the link, or let us know.</small>",
+      loadFail: "Something went wrong loading your invitation.<br><small>Please try again in a moment.</small>",
+      eyebrow: "Henna night",
+      lead: "Will you join us?",
+      instruct: "Please let us know who will be joining us.",
+      attendQ: "Will you be attending?",
+      yes: "Yes", no: "No",
+      dietLabel: "Dietary preference",
+      dietNone: "No preference", dietVeg: "Vegetarian", dietPesc: "Pescetarian",
+      allergyLabel: "Allergies or dietary notes (optional)",
+      extraLabel: "Anything else we should know? (optional)",
+      extraPh: "Access needs, arrival, etc.",
+      msgLabel: "A message to the bride (optional)",
+      msgPh: "Leave a note for Beyza",
+      send: "Send our RSVP",
+      sending: "Sending…",
+      hintAll: "Please choose yes or no for everyone above.",
+      thanks: "Thank you",
+      sendFail: "Something went wrong sending your RSVP. Please try again.",
+      doneNone1: "We're sorry you can't be there — thank you for letting us know.",
+      doneNoneMany: "We're sorry none of you can make it — thank you for letting us know.",
+      doneAll: (c)=> c===1 ? "We can't wait to see you."
+                          : "We can't wait to see all of you.",
+      donePartial: "We can't wait to see those who can come — we'll miss the rest of your party.",
+    }
+  };
+
+  let lang = 'tr';
+  // UI state that applyLang re-renders: which overlay phase we're in,
+  // plus data needed to rebuild dynamic strings in the new language.
+  const uiState = { phase:'status', statusKey:'opening', isError:false, done:null };
+
+  function t(key){ return I18N[lang][key]; }
+
+  function applyLang(next){
+    lang = next;
+    document.documentElement.lang = lang;
+    document.getElementById('langTr').classList.toggle('active', lang==='tr');
+    document.getElementById('langEn').classList.toggle('active', lang==='en');
+
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const v = t(el.dataset.i18n);
+      if (typeof v === 'string') el.innerHTML = v;
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+      el.placeholder = t(el.dataset.i18nPh);
+    });
+
+    // flip button depends on card state
+    const flipped = document.getElementById('card').classList.contains('flipped');
+    document.getElementById('flipBtn').innerHTML = flipped ? t('flipBack') : t('flipOver');
+
+    // dynamic overlay strings
+    const statusEl = document.getElementById('rsvpStatus');
+    if (uiState.phase === 'status'){ statusEl.innerHTML = t(uiState.statusKey); }
+    if (uiState.phase === 'done' && uiState.done){ renderDoneLine(); }
+    const sBtn = document.getElementById('rsvpSubmit');
+    if (sBtn.dataset.sending !== '1') sBtn.textContent = t('send');
+  }
+
+  document.getElementById('langTr').addEventListener('click', ()=> applyLang('tr'));
+  document.getElementById('langEn').addEventListener('click', ()=> applyLang('en'));
+
+  // ======================= data / routing =======================
+  const ENDPOINT = "https://script.google.com/macros/s/AKfycbwGIriwe6m1sxXqyThb4r1OYj1IU2p2FAhWrWUMIP-GH4UPRyvQDHf6W3cF_JTLSonb/exec";
+  const code = new URLSearchParams(location.search).get('code');
+  const DEMO = code === 'demo';   // local demo: fake data, no network
+
+  // JSONP as a promise (Apps Script can't send CORS headers)
+  function jsonp(url){
+    return new Promise((resolve, reject)=>{
+      const cbName = 'rsvpCb_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+      const s = document.createElement('script');
+      let done = false;
+      function cleanup(){
+        done = true; clearTimeout(timer);
+        if(s.parentNode) s.parentNode.removeChild(s);
+        try{ delete window[cbName]; }catch(_){ window[cbName] = undefined; }
+      }
+      const timer = setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('timeout')); } }, 12000);
+      window[cbName] = (data)=>{ cleanup(); resolve(data); };
+      s.onerror = ()=>{ cleanup(); reject(new Error('network')); };
+      s.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+      document.body.appendChild(s);
+    });
+  }
+
+  // Details-tab keys -> which I18N string they override
+  const DETAIL_MAP = {
+    kina_name_tr:  ['tr','frontName'],  kina_name_en:  ['en','frontName'],
+    kina_caps_tr:  ['tr','frontCaps'],  kina_caps_en:  ['en','frontCaps'],
+    kina_script_tr:['tr','backScript'], kina_script_en:['en','backScript'],
+    kina_fun_tr:   ['tr','funLine'],    kina_fun_en:   ['en','funLine'],
+    kina_follow_tr:['tr','follow'],     kina_follow_en:['en','follow'],
+    kina_time_tr:  ['tr','whenTime'],   kina_time_en:  ['en','whenTime'],
+    kina_venue_tr: ['tr','frontMeta'],  kina_venue_en: ['en','frontMeta'],
+    kina_month_tr: ['tr','monthName'],  kina_month_en: ['en','monthName'],
+  };
+  function applyDetails(details){
+    for (const key in DETAIL_MAP){
+      const v = details[key];
+      if (v !== undefined && String(v).trim() !== ''){
+        const pair = DETAIL_MAP[key];
+        I18N[pair[0]][pair[1]] = String(v);
+      }
+    }
+    if (String(details.kina_day  || '').trim() !== '')
+      document.querySelectorAll('.js-day').forEach(el => el.textContent = String(details.kina_day).padStart(2,'0'));
+    if (String(details.kina_year || '').trim() !== '')
+      document.querySelectorAll('.js-year').forEach(el => el.textContent = String(details.kina_year).padStart(2,'0'));
+    applyLang(lang);   // re-render every string with the overrides in place
+  }
+
+  // Route on load: no code -> blank; wedding code -> wedding invite;
+  // kına code -> stay, and pull wording from the sheet. The same response
+  // is reused by the RSVP overlay (single fetch).
+  let prefetch = null;
+  if (!code){
+    document.body.classList.add('blank');
+  } else if (!DEMO){
+    prefetch = jsonp(ENDPOINT + "?code=" + encodeURIComponent(code));
+    prefetch.then((data)=>{
+      if (data && data.ok && data.type !== 'kina'){
+        // wedding code (or a backend that predates routing) -> wedding page
+        location.replace('./?code=' + encodeURIComponent(code));
+        return;
+      }
+      if (data && data.ok) applyDetails(data.details || {});
+    }).catch(()=>{ /* overlay shows the error if opened */ });
+  }
+
+  // ======================= scene =======================
+  const scene = document.getElementById('scene');
+  const card  = document.getElementById('card');
+  const flipBtn = document.getElementById('flipBtn');
+
+  function openInvite(){
+    if (scene.classList.contains('is-open')) return;
+    scene.classList.add('is-open');
+    flipBtn.tabIndex = 0;
+  }
+  function toggleFlip(){
+    const flipped = card.classList.toggle('flipped');
+    flipBtn.innerHTML = flipped ? t('flipBack') : t('flipOver');
+  }
+
+  scene.addEventListener('click', (e)=>{
+    if (!scene.classList.contains('is-open')) { openInvite(); return; }
+    if (e.target.closest('.rsvp')) return;
+    if (e.target.closest('.flip-btn')) return;
+    if (e.target.closest('.card')) toggleFlip();
+  });
+  scene.addEventListener('keydown', (e)=>{
+    if ((e.key === 'Enter' || e.key === ' ') && !scene.classList.contains('is-open')){
+      e.preventDefault(); openInvite();
+    }
+  });
+  flipBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleFlip(); });
+
+  // ======================= RSVP =======================
+  function renderDoneLine(){
+    const { count, total } = uiState.done;
+    const dl = document.getElementById('rsvpDoneLine');
+    if (count === 0){
+      dl.textContent = total === 1 ? t('doneNone1') : t('doneNoneMany');
+    } else if (count === total){
+      dl.textContent = t('doneAll')(count);
+    } else {
+      dl.textContent = t('donePartial');
+    }
+  }
+
+  (function(){
+    const overlay  = document.getElementById('rsvpOverlay');
+    const openBtn  = document.getElementById('rsvpBtn');
+    const closeBtn = document.getElementById('rsvpClose');
+    const statusEl = document.getElementById('rsvpStatus');
+    const formEl   = document.getElementById('rsvpForm');
+    const peopleEl = document.getElementById('rsvpPeople');
+    const doneEl   = document.getElementById('rsvpDone');
+    let members = [];
+    let loaded = false;
+
+    const show = (el)=> el.classList.remove('rsvp-hidden');
+    const hide = (el)=> el.classList.add('rsvp-hidden');
+    function fail(key){
+      uiState.phase = 'status'; uiState.statusKey = key; uiState.isError = true;
+      statusEl.innerHTML = t(key); statusEl.classList.add('rsvp-err'); show(statusEl);
+    }
+
+    function openOverlay(){
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      if(!loaded){ loaded = true; load(); }
+    }
+    function closeOverlay(){
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function load(){
+      if(DEMO){
+        members = [
+          { row:2, name:"Ayşe", surname:"Yılmaz", attending:"", dietaryPreference:"", dietaryNotes:"", additionalNotes:"", messageToCouple:"" },
+          { row:3, name:"Fatma", surname:"Yılmaz", attending:"", dietaryPreference:"", dietaryNotes:"", additionalNotes:"", messageToCouple:"" },
+        ];
+        render();
+        return;
+      }
+      if(!code){ fail('missingCode'); return; }
+      // reuse the response fetched at page load (single request)
+      if(!prefetch){ fail('loadFail'); return; }
+      prefetch.then((data)=>{
+        if(!data || !data.ok){ fail('notFound'); return; }
+        members = data.members;
+        render();
+      }).catch(()=>{ fail('loadFail'); });
+    }
+
+    function render(){
+      members.forEach((m)=>{
+        const ans = String(m.attending).toLowerCase();
+        const el = document.createElement('div');
+        el.className = "rsvp-person";
+        el.dataset.answer = (ans === "yes" || ans === "no") ? ans : "";
+        el.innerHTML =
+          '<div class="rsvp-name">' + m.name + ' ' + (m.surname || "") + '</div>' +
+          '<div class="rsvp-q">' +
+            '<span class="rsvp-q-label" data-i18n="attendQ">' + t('attendQ') + '</span>' +
+            '<div class="rsvp-choice">' +
+              '<button type="button" class="rsvp-pill yes' + (ans==="yes"?" selected":"") + '" data-val="yes" data-i18n="yes">' + t('yes') + '</button>' +
+              '<button type="button" class="rsvp-pill no'  + (ans==="no" ?" selected":"") + '" data-val="no" data-i18n="no">' + t('no') + '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="rsvp-details"' + (ans==="yes" ? "" : " hidden") + '>' +
+            '<label class="rsvp-field"><span data-i18n="dietLabel">' + t('dietLabel') + '</span>' +
+              '<select class="diet">' +
+                '<option value="" data-i18n="dietNone">' + t('dietNone') + '</option>' +
+                '<option value="vegetarian" data-i18n="dietVeg" '  + (m.dietaryPreference==="vegetarian"  ? "selected" : "") + '>' + t('dietVeg') + '</option>' +
+                '<option value="pescetarian" data-i18n="dietPesc" ' + (m.dietaryPreference==="pescetarian" ? "selected" : "") + '>' + t('dietPesc') + '</option>' +
+              '</select>' +
+            '</label>' +
+            '<label class="rsvp-field"><span data-i18n="allergyLabel">' + t('allergyLabel') + '</span>' +
+              '<input type="text" class="dietnotes" value="' + (m.dietaryNotes||"").replace(/"/g,'&quot;') + '" />' +
+            '</label>' +
+          '</div>';
+        peopleEl.appendChild(el);
+      });
+
+      peopleEl.addEventListener('click',(e)=>{
+        const pill = e.target.closest('.rsvp-pill');
+        if(!pill) return;
+        const person = pill.closest('.rsvp-person');
+        const val = pill.dataset.val;
+        person.dataset.answer = val;
+        person.classList.remove('missing');
+        person.querySelectorAll('.rsvp-pill').forEach(p => p.classList.toggle('selected', p === pill));
+        person.querySelector('.rsvp-details').hidden = (val !== 'yes');
+        updateSubmitState();
+      });
+
+      if(members[0]){
+        document.getElementById('rsvpAddNotes').value = members[0].additionalNotes || "";
+        document.getElementById('rsvpMessage').value  = members[0].messageToCouple || "";
+      }
+      updateSubmitState();
+      uiState.phase = 'form';
+      hide(statusEl); show(formEl);
+    }
+
+    function updateSubmitState(){
+      const persons = [...peopleEl.querySelectorAll('.rsvp-person')];
+      const allAnswered = persons.length > 0 && persons.every(p => p.dataset.answer);
+      document.getElementById('rsvpSubmit').disabled = !allAnswered;
+      document.getElementById('rsvpHint').style.display = allAnswered ? 'none' : 'block';
+    }
+
+    document.getElementById('rsvpSubmit').addEventListener('click', async ()=>{
+      const rows = [...peopleEl.querySelectorAll('.rsvp-person')];
+
+      const unanswered = rows.filter(r => !r.dataset.answer);
+      if(unanswered.length){
+        unanswered.forEach(r => r.classList.add('missing'));
+        updateSubmitState();
+        return;
+      }
+
+      const sBtn = document.getElementById('rsvpSubmit');
+      sBtn.disabled = true; sBtn.dataset.sending = '1'; sBtn.textContent = t('sending');
+      let count = 0;
+      const payloadMembers = rows.map((row,i)=>{
+        const attending = row.dataset.answer === 'yes';
+        if(attending) count++;
+        return {
+          row: members[i].row,
+          attending,
+          dietaryPreference: attending ? row.querySelector('.diet').value : "",
+          dietaryNotes: attending ? row.querySelector('.dietnotes').value.trim() : "",
+          additionalNotes: i===0 ? document.getElementById('rsvpAddNotes').value.trim() : "",
+          messageToCouple: i===0 ? document.getElementById('rsvpMessage').value.trim() : "",
+        };
+      });
+      try{
+        if(!DEMO){
+          await fetch(ENDPOINT, { method:"POST", mode:"no-cors", body: JSON.stringify({ code, members: payloadMembers }) });
+        }
+        sBtn.dataset.sending = '';
+        hide(formEl); show(doneEl);
+        uiState.phase = 'done';
+        uiState.done = { count, total: payloadMembers.length };
+        renderDoneLine();
+      }catch(err){
+        sBtn.disabled = false; sBtn.dataset.sending = ''; sBtn.textContent = t('send');
+        alert(t('sendFail'));
+      }
+    });
+
+    openBtn.addEventListener('click', (e)=>{ e.stopPropagation(); openOverlay(); });
+    closeBtn.addEventListener('click', closeOverlay);
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeOverlay(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay.classList.contains('open')) closeOverlay(); });
+  })();
+</script>
+</body>
+</html>

@@ -67,6 +67,9 @@
   }
   .scene.is-open{ cursor:default; }
 
+  /* no ?code= in the URL -> blank page */
+  body.no-code .scene{ display:none; }
+
   /* ---------------- Envelope (closed look) ---------------- */
   .env-back{
     position:absolute; inset:0;
@@ -398,6 +401,29 @@
 </div>
 
 <script>
+  const ENDPOINT = "https://script.google.com/macros/s/AKfycbwGIriwe6m1sxXqyThb4r1OYj1IU2p2FAhWrWUMIP-GH4UPRyvQDHf6W3cF_JTLSonb/exec";
+
+  // ---- routing: no code -> blank page; kına code -> kına invite ----
+  // The envelope shows straight away (wedding guests are the common case);
+  // if the backend says the code is a kına one, we hop to kina.html.
+  const inviteCode = new URLSearchParams(location.search).get('code');
+  if (!inviteCode){
+    document.body.classList.add('no-code');
+  } else {
+    const routeCb = 'routeCb_' + Date.now();
+    const routeS = document.createElement('script');
+    window[routeCb] = function(data){
+      if (routeS.parentNode) routeS.parentNode.removeChild(routeS);
+      try{ delete window[routeCb]; }catch(_){ window[routeCb] = undefined; }
+      if (data && data.ok && data.type === 'kina'){
+        location.replace('kina.html?code=' + encodeURIComponent(inviteCode));
+      }
+    };
+    routeS.onerror = function(){ if (routeS.parentNode) routeS.parentNode.removeChild(routeS); };
+    routeS.src = ENDPOINT + "?code=" + encodeURIComponent(inviteCode) + "&callback=" + routeCb;
+    document.body.appendChild(routeS);
+  }
+
   const scene = document.getElementById('scene');
   const card  = document.getElementById('card');
   const flipBtn = document.getElementById('flipBtn');
@@ -428,8 +454,7 @@
 
   // ---------------- RSVP overlay ----------------
   (function(){
-    const ENDPOINT = "https://script.google.com/macros/s/AKfycbwGIriwe6m1sxXqyThb4r1OYj1IU2p2FAhWrWUMIP-GH4UPRyvQDHf6W3cF_JTLSonb/exec";
-    const code = new URLSearchParams(location.search).get('code');
+    const code = inviteCode;
     const overlay  = document.getElementById('rsvpOverlay');
     const openBtn  = document.getElementById('rsvpBtn');
     const closeBtn = document.getElementById('rsvpClose');

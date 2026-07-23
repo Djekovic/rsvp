@@ -1,0 +1,3 @@
+# Apps Script backend — lives in Google, mirrored here via clasp.
+# Never publish it to GitHub Pages (contains the setup secret).
+apps-script/
