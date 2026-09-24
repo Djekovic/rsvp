@@ -15,8 +15,8 @@
 
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Kına Gecesi" />
-<meta property="og:description" content="Beyza'nın kına gecesi — 06.11.26. Davetiyeyi açmak için dokunun." />
-<meta property="og:image" content="https://yakub-and-beyza.wedding/kina-preview.png" />
+<meta property="og:description" content="Beyza'nın kına gecesi — 01.11.26. Davetiyeyi açmak için dokunun." />
+<meta property="og:image" content="https://yakub-and-beyza.wedding/kina-preview-2026-11-01.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://yakub-and-beyza.wedding/kina.html" />
@@ -354,7 +354,7 @@
           <div class="eyebrow-line" data-i18n="eyebrowLine"></div>
           <div class="script-name" data-i18n="frontName">Beyza'nın</div>
           <div class="caps-line" data-i18n="frontCaps">Kına Gecesine Davetlisiniz</div>
-          <div class="pipe-date"><span class="js-day">06</span><span class="pipe">|</span><span data-i18n="monthName">Kasım</span><span class="pipe">|</span><span class="js-year">26</span></div>
+          <div class="pipe-date"><span class="js-day">01</span><span class="pipe">|</span><span data-i18n="monthName">Kasım</span><span class="pipe">|</span><span class="js-year">26</span></div>
           <div class="time-line" data-i18n="whenTime">Saat 19:00</div>
           <div class="venue-lines" data-i18n="frontMeta">Yer bilgisi yakında</div>
           <button class="rsvp" id="rsvpBtn" type="button">LCV / RSVP</button>
@@ -521,7 +521,7 @@
         if(s.parentNode) s.parentNode.removeChild(s);
         try{ delete window[cbName]; }catch(_){ window[cbName] = undefined; }
       }
-      const timer = setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('timeout')); } }, 12000);
+      const timer = setTimeout(()=>{ if(!done){ cleanup(); reject(new Error('timeout')); } }, 30000);
       window[cbName] = (data)=>{ cleanup(); resolve(data); };
       s.onerror = ()=>{ cleanup(); reject(new Error('network')); };
       s.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
